@@ -1,30 +1,30 @@
 -----------------------------------------------------------------------------
 --
--- Module      :  MainTestGenerator
--- Copyright   :  
--- License     :  BSD4
+-- Module      :  Test.Tasty.TH
+-- Copyright   :  Oscar Finnsson, Benno Fünfstück
+-- License     :  BSD3
 --
 -- Maintainer  :  Benno Fünfstück
--- Stability   :  
--- Portability :  
+-- Stability   :
+-- Portability :
 --
--- 
+--
 -----------------------------------------------------------------------------
-{-# OPTIONS_GHC -XTemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell #-}
 
-module Test.Tasty.TH 
+module Test.Tasty.TH
   ( testGroupGenerator
   , defaultMainGenerator
   ) where
 
 import Language.Haskell.TH
-import Language.Haskell.Extract 
+import Language.Haskell.Extract
 
 import Test.Tasty
 
 -- | Generate the usual code and extract the usual functions needed in order to run HUnit/Quickcheck/Quickcheck2.
 -- All functions beginning with case_, prop_ or test_ will be extracted.
--- 
+--
 -- > {-# OPTIONS_GHC -fglasgow-exts -XTemplateHaskell #-}
 -- > module MyModuleTest where
 -- > import Test.HUnit
@@ -43,7 +43,7 @@ import Test.Tasty
 -- > [ testCase "1" case_Foo
 -- > , testProperty "2" prop_Reverse
 -- > ]
--- 
+--
 -- will automagically extract prop_Reverse, case_Foo, case_Bar and test_Group and run them as well as present them as belonging to the testGroup 'MyModuleTest' such as
 --
 -- > me: runghc MyModuleTest.hs
@@ -65,7 +65,7 @@ defaultMainGenerator =
 
 -- | Generate the usual code and extract the usual functions needed for a testGroup in HUnit/Quickcheck/Quickcheck2.
 --   All functions beginning with case_, prop_ or test_ will be extracted.
---  
+--
 --   > -- file SomeModule.hs
 --   > fooTestGroup = $(testGroupGenerator)
 --   > main = defaultMain [fooTestGroup]
@@ -73,7 +73,7 @@ defaultMainGenerator =
 --   > case_2 = do 2 @=? 2
 --   > prop_p xs = reverse (reverse xs) == xs
 --   >  where types = xs :: [Int]
---   
+--
 --   is the same as
 --
 --   > -- file SomeModule.hs
@@ -105,7 +105,7 @@ testListGenerator = listGenerator "^test_" "testGroup"
 applyNameFix :: String -> ExpQ
 applyNameFix n =
   do fn <- [|fixName|]
-     return $ LamE [VarP (mkName "n")] (AppE (VarE (mkName n)) (AppE (fn) (VarE (mkName "n"))))
+     return $ LamE [VarP (mkName "n")] (AppE (VarE (mkName n)) (AppE fn (VarE (mkName "n"))))
 
 fixName :: String -> String
 fixName name = replace '_' ' ' $ drop 5 name

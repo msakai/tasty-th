@@ -12,6 +12,16 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE TemplateHaskell #-}
 
+-- | This module provides TemplateHaskell functions to automatically generate
+-- tasty TestTrees from specially named functions. See the README of the package
+-- for examples.
+--
+-- Important: due to to the GHC staging restriction, you must put any uses of these
+-- functions at the end of the file, or you will get compile errors like the following:
+--
+-- @
+-- 
+-- @
 module Test.Tasty.TH
   ( testGroupGenerator
   , defaultMainGenerator
@@ -22,67 +32,40 @@ import Language.Haskell.Extract
 
 import Test.Tasty
 
--- | Generate the usual code and extract the usual functions needed in order to run HUnit/Quickcheck/Quickcheck2.
--- All functions beginning with case_, prop_ or test_ will be extracted.
+-- | Convenience function that directly generates an `IO` action that may be used as the
+-- main function. It's just a wrapper that applies 'defaultMain' to the 'TestTree' generated
+-- by 'testGroupGenerator'.
 --
--- > {-# OPTIONS_GHC -fglasgow-exts -XTemplateHaskell #-}
--- > module MyModuleTest where
--- > import Test.HUnit
--- > import MainTestGenerator
--- >
--- > main = $(defaultMainGenerator)
--- >
--- > case_Foo = do 4 @=? 4
--- >
--- > case_Bar = do "hej" @=? "hej"
--- >
--- > prop_Reverse xs = reverse (reverse xs) == xs
--- > where types = xs :: [Int]
--- >
--- > test_Group =
--- > [ testCase "1" case_Foo
--- > , testProperty "2" prop_Reverse
--- > ]
+-- Example usage:
 --
--- will automagically extract prop_Reverse, case_Foo, case_Bar and test_Group and run them as well as present them as belonging to the testGroup 'MyModuleTest' such as
+-- @
+-- -- properties, test cases, ....
 --
--- > me: runghc MyModuleTest.hs
--- > MyModuleTest:
--- > Reverse: [OK, passed 100 tests]
--- > Foo: [OK]
--- > Bar: [OK]
--- > Group:
--- > 1: [OK]
--- > 2: [OK, passed 100 tests]
--- >
--- > Properties Test Cases Total
--- > Passed 2 3 5
--- > Failed 0 0 0
--- > Total 2 3 5
+-- main :: IO ()
+-- main = $('defaultMainGenerator')
+-- @
 defaultMainGenerator :: ExpQ
 defaultMainGenerator =
   [| defaultMain $ testGroup $(locationModule) $ $(propListGenerator) ++ $(caseListGenerator) ++ $(testListGenerator)|]
 
--- | Generate the usual code and extract the usual functions needed for a testGroup in HUnit/Quickcheck/Quickcheck2.
---   All functions beginning with case_, prop_ or test_ will be extracted.
+-- | This function generates a 'TestTree' from functions in the current module. 
+-- The test tree is named after the current module.
 --
---   > -- file SomeModule.hs
---   > fooTestGroup = $(testGroupGenerator)
---   > main = defaultMain [fooTestGroup]
---   > case_1 = do 1 @=? 1
---   > case_2 = do 2 @=? 2
---   > prop_p xs = reverse (reverse xs) == xs
---   >  where types = xs :: [Int]
+-- The following definitions are collected by `testGroupGenerator`:
 --
---   is the same as
+-- * a test_something definition in the current module creates a sub-testGroup with the name "something"
+-- * a prop_something definition in the current module is added as a QuickCheck property named "something"
+-- * a case_something definition leads to a HUnit-Assertion test with the name "something"
 --
---   > -- file SomeModule.hs
---   > fooTestGroup = testGroup "SomeModule" [testProperty "p" prop_1, testCase "1" case_1, testCase "2" case_2]
---   > main = defaultMain [fooTestGroup]
---   > case_1 = do 1 @=? 1
---   > case_2 = do 2 @=? 2
---   > prop_1 xs = reverse (reverse xs) == xs
---   >  where types = xs :: [Int]
+-- Example usage:
+--
+-- @
+-- prop_example :: Int -> Int -> Bool
+-- prop_example a b = a + b == b + a
+--
+-- tests :: 'TestTree'
+-- tests = $('testGroupGenerator')
+-- @
 testGroupGenerator :: ExpQ
 testGroupGenerator =
   [| testGroup $(locationModule) $ $(propListGenerator) ++ $(caseListGenerator) ++ $(testListGenerator) |]
@@ -100,15 +83,13 @@ caseListGenerator = listGenerator "^case_" "testCase"
 testListGenerator :: ExpQ
 testListGenerator = listGenerator "^test_" "testGroup"
 
--- | The same as
---   e.g. \n f -> testProperty (fixName n) f
 applyNameFix :: String -> ExpQ
-applyNameFix n =
-  do fn <- [|fixName|]
-     return $ LamE [VarP (mkName "n")] (AppE (VarE (mkName n)) (AppE fn (VarE (mkName "n"))))
+applyNameFix n = do
+  fn <- [|fixName|]
+  return $ LamE [VarP (mkName "n")] (AppE (VarE (mkName n)) (AppE fn (VarE (mkName "n"))))
 
 fixName :: String -> String
-fixName name = replace '_' ' ' $ drop 5 name
+fixName = replace '_' ' ' . tail . dropWhile (/= '_')
 
 replace :: Eq a => a -> a -> [a] -> [a]
 replace b v = map (\i -> if b == i then v else i)

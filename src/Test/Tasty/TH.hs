@@ -17,11 +17,7 @@
 -- for examples.
 --
 -- Important: due to to the GHC staging restriction, you must put any uses of these
--- functions at the end of the file, or you will get compile errors like the following:
---
--- @
--- 
--- @
+-- functions at the end of the file, or you may get errors due to missing definitions.
 module Test.Tasty.TH
   ( testGroupGenerator
   , defaultMainGenerator

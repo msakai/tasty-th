@@ -3,3 +3,5 @@ dist
 *.swp
 *.hi
 *.o
+*.dyn_o
+*.dyn_hi

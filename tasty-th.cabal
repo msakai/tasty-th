@@ -6,7 +6,7 @@ license: BSD3
 license-file: BSD3.txt
 maintainer: Benno Fünfstück <benno.fuenfstueck@gmail.com>
 homepage: http://github.com/bennofs/tasty-th
-synopsis: Automagically generate the HUnit- and Quickcheck-bulk-code using Template Haskell.
+synopsis: Automatic tasty test case discovery using TH
 description: Generate tasty TestTrees automatically with TemplateHaskell. See the README for example usage.
 
 category: Testing

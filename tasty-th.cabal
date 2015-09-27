@@ -14,7 +14,7 @@ author: Oscar Finnsson & Emil Nordling & Benno Fünfstück
 
 library
   exposed-modules: Test.Tasty.TH
-  build-depends: base >= 4 && < 5, tasty, language-haskell-extract >= 0.2, template-haskell, tasty-hunit, tasty-quickcheck
+  build-depends: base >= 4 && < 5, tasty, language-haskell-extract >= 0.2, template-haskell
   hs-source-dirs: src
   other-extensions: TemplateHaskell
 

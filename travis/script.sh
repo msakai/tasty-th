@@ -4,7 +4,10 @@ begin_steps
 
 if [ -n "$ROOT" ]; then
   step "Checking style with HLint" << EOF
-    hlint --cpp-simple src tests
+    hlint --cpp-simple src
+    if [ -d tests ]; then
+      hlint --cpp-simple tests
+    fi
 EOF
 fi
 
@@ -33,7 +36,7 @@ fi
 set -e
 
 step "Running tests" << EOF
-  cabal test
+  cabal test 
 EOF
 
 step "Creating source distribution" << EOF

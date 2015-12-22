@@ -49,7 +49,7 @@ It is important that you place this at the end of the file, since GHC only sees 
 If you don't wish to generate a main function, but instead just want a TestTree, you can use the `testGroupGenerator` macro for that:
 
 ```
-tests :: IO ()
+tests :: TestTree
 tests = $(testGroupGenerator)
 ```
 

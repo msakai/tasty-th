@@ -21,10 +21,16 @@
 module Test.Tasty.TH
   ( testGroupGenerator
   , defaultMainGenerator
+  , testGroupGeneratorFor
+  , defaultMainGeneratorFor
+  , extractTestFunctions
+  , locationModule
   ) where
 
+import Control.Monad (join)
 import Language.Haskell.TH
-import Language.Haskell.Extract
+import Data.List
+import Data.Maybe
 
 import Test.Tasty
 
@@ -41,8 +47,7 @@ import Test.Tasty
 -- main = $('defaultMainGenerator')
 -- @
 defaultMainGenerator :: ExpQ
-defaultMainGenerator =
-  [| defaultMain $ testGroup $(locationModule) $ $(propListGenerator) ++ $(caseListGenerator) ++ $(testListGenerator)|]
+defaultMainGenerator = [| defaultMain $(testGroupGenerator) |]
 
 -- | This function generates a 'TestTree' from functions in the current module. 
 -- The test tree is named after the current module.
@@ -63,26 +68,45 @@ defaultMainGenerator =
 -- tests = $('testGroupGenerator')
 -- @
 testGroupGenerator :: ExpQ
-testGroupGenerator =
-  [| testGroup $(locationModule) $ $(propListGenerator) ++ $(caseListGenerator) ++ $(testListGenerator) |]
+testGroupGenerator = join $ testGroupGeneratorFor <$> fmap loc_module location <*> testFunctions
+ where
+  testFunctions = location >>= runIO . extractTestFunctions . loc_filename
 
-listGenerator :: String -> String -> ExpQ
-listGenerator beginning funcName =
-  functionExtractorMap beginning (applyNameFix funcName)
+-- | Retrieves all function names from the given file that would be discovered by 'testGroupGenerator'.
+extractTestFunctions :: FilePath -> IO [String]
+extractTestFunctions filePath = do
+  file <- readFile filePath
+  let functions = map fst . concat . map lex . lines $ file
+      filtered pattern = filter (pattern `isPrefixOf`) functions
+  return . nub $ concat [filtered "prop_", filtered "case_", filtered "test_"]
 
-propListGenerator :: ExpQ
-propListGenerator = listGenerator "^prop_" "testProperty"
+-- | Extract the name of the current module.
+locationModule :: ExpQ
+locationModule = do
+  loc <- location
+  return $ LitE $ StringL $ loc_module loc
 
-caseListGenerator :: ExpQ
-caseListGenerator = listGenerator "^case_" "testCase"
+-- | Like 'testGroupGenerator', but generates a test group only including the specified function names.
+-- The function names still need to follow the pattern of starting with one of @prop_@, @case_@ or @test_@.
+testGroupGeneratorFor
+  :: String   -- ^ The name of the test group itself
+  -> [String] -- ^ The names of the functions which should be included in the test group
+  -> ExpQ
+testGroupGeneratorFor name functionNames = [| testGroup name $(listE (mapMaybe test functionNames)) |]
+ where
+  testFunctions = [("prop_", "testProperty"), ("case_", "testCase"), ("test_", "testGroup")]
+  getTestFunction fname = fmap snd $ find ((`isPrefixOf` fname) . fst) testFunctions
+  test fname = do
+    fn <- getTestFunction fname
+    return $ appE (appE (varE $ mkName fn) (stringE (fixName fname))) (varE (mkName fname))
 
-testListGenerator :: ExpQ
-testListGenerator = listGenerator "^test_" "testGroup"
-
-applyNameFix :: String -> ExpQ
-applyNameFix n = do
-  fn <- [|fixName|]
-  return $ LamE [VarP (mkName "n")] (AppE (VarE (mkName n)) (AppE fn (VarE (mkName "n"))))
+-- | Like 'defaultMainGenerator', but only includes the specific function names in the test group.
+-- The function names still need to follow the pattern of starting with one of @prop_@, @case_@ or @test_@.
+defaultMainGeneratorFor
+  :: String   -- ^ The name of the top-level test group
+  -> [String] -- ^ The names of the functions which should be included in the test group
+  -> ExpQ
+defaultMainGeneratorFor name fns = [| defaultMain $(testGroupGeneratorFor name fns) |]
 
 fixName :: String -> String
 fixName = replace '_' ' ' . tail . dropWhile (/= '_')

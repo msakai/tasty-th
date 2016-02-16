@@ -78,8 +78,8 @@ testGroupGenerator = join $ testGroupGeneratorFor <$> fmap loc_module location <
 extractTestFunctions :: FilePath -> IO [String]
 extractTestFunctions filePath = do
   file <- readFile filePath
-  let functions = map fst . concat . map lex . lines $ file
-      filtered pattern = filter (pattern `isPrefixOf`) functions
+  let functions = map fst . concatMap lex . lines $ file
+      filtered pat = filter (pat `isPrefixOf`) functions
   return . nub $ concat [filtered "prop_", filtered "case_", filtered "test_"]
 
 -- | Extract the name of the current module.
@@ -97,7 +97,7 @@ testGroupGeneratorFor
 testGroupGeneratorFor name functionNames = [| testGroup name $(listE (mapMaybe test functionNames)) |]
  where
   testFunctions = [("prop_", "testProperty"), ("case_", "testCase"), ("test_", "testGroup")]
-  getTestFunction fname = fmap snd $ find ((`isPrefixOf` fname) . fst) testFunctions
+  getTestFunction fname = snd <$> find ((`isPrefixOf` fname) . fst) testFunctions
   test fname = do
     fn <- getTestFunction fname
     return $ appE (appE (varE $ mkName fn) (stringE (fixName fname))) (varE (mkName fname))

@@ -28,11 +28,13 @@ module Test.Tasty.TH
   ) where
 
 import Control.Monad (join)
+import Control.Applicative
 import Language.Haskell.TH
 import Data.List
 import Data.Maybe
 
 import Test.Tasty
+import Prelude
 
 -- | Convenience function that directly generates an `IO` action that may be used as the
 -- main function. It's just a wrapper that applies 'defaultMain' to the 'TestTree' generated

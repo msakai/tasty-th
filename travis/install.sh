@@ -39,17 +39,28 @@ EOF
 fi
 
 if [ ! -z $ROOT ]; then
-  step "Installing tools" << EOF
-    if [ ! -d $HOME/tools/bin ]; then
+  TOOLS="hlint packunused haddock"
+
+  step "Computing tool versions" << EOF
+    touch toolversions.txt
+    for tool in $TOOLS; do
+      cabal list --simple-output \$tool | grep "^\$tool " | tail -n1 >> toolversions.txt
+    done
+    cat toolversions.txt
+EOF
+  if ! diff -u toolversions.txt $HOME/tools/toolversions.txt; then
+    CABAL_FULL_VERSION=$(ghc-pkg latest Cabal)
+    step "Installing tools" << EOF
+      rm -rf $HOME/tools
       mkdir -p $HOME/tools
       cd $HOME/tools
       cabal sandbox init
-      cabal install hlint packunused
+      cabal install $TOOLS --constraint "Cabal==${CABAL_FULL_VERSION##*-}"
       ln -s $HOME/tools/.cabal-sandbox/bin $HOME/tools/bin
-    else
-      echo "Tools already installed"
-    fi
+      rm -f $HOME/tools/bin/{happy,ghc,alex,cabal}
 EOF
+    cp toolversions.txt $HOME/tools
+  fi
 fi
 
 end_steps

@@ -29,6 +29,9 @@ module Test.Tasty.TH
 
 import Control.Monad (join)
 import Control.Applicative
+import Language.Haskell.Exts (parseFileContents)
+import Language.Haskell.Exts.Parser (ParseResult(..))
+import qualified Language.Haskell.Exts.Syntax as S
 import Language.Haskell.TH
 import Data.List
 import Data.Maybe
@@ -78,9 +81,23 @@ testGroupGenerator = join $ testGroupGeneratorFor <$> fmap loc_module location <
 extractTestFunctions :: FilePath -> IO [String]
 extractTestFunctions filePath = do
   file <- readFile filePath
-  let functions = map fst . concatMap lex . lines $ file
+  -- we first try to parse the file using haskell-src-exts
+  -- if that fails, we fallback to lexing each line, which is less
+  -- accurate but is more reliable (haskell-src-exts sometimes struggles
+  -- with less-common GHC extensions).
+  let functions = fromMaybe (lexed file) (parsed file)
       filtered pat = filter (pat `isPrefixOf`) functions
   return . nub $ concat [filtered "prop_", filtered "case_", filtered "test_"]
+ where
+  lexed = map fst . concatMap lex . lines
+  
+  parsed file = case parseFileContents file of
+    ParseOk parsedModule -> Just (declarations parsedModule)
+    ParseFailed _ _ -> Nothing
+  declarations (S.Module _ _ _ _ decls) = mapMaybe testFunName decls
+  declarations _ = []
+  testFunName (S.PatBind _ (S.PVar _ (S.Ident _ n)) _ _) = Just n
+  testFunName _ = Nothing
 
 -- | Extract the name of the current module.
 locationModule :: ExpQ

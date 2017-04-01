@@ -1,5 +1,5 @@
 Copyright (c) 2010, Oscar Finnsson
-Copyright (c) 2013-2016, Benno Fünfstück
+Copyright (c) 2013-2017, Benno Fünfstück
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

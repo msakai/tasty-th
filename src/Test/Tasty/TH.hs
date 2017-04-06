@@ -29,8 +29,8 @@ module Test.Tasty.TH
 
 import Control.Monad (join)
 import Control.Applicative
-import Language.Haskell.Exts (parseFileContents)
-import Language.Haskell.Exts.Parser (ParseResult(..))
+import Language.Haskell.Exts (parseFileContentsWithMode)
+import Language.Haskell.Exts.Parser (ParseResult(..), defaultParseMode, parseFilename)
 import qualified Language.Haskell.Exts.Syntax as S
 import Language.Haskell.TH
 import Data.List
@@ -91,7 +91,7 @@ extractTestFunctions filePath = do
  where
   lexed = map fst . concatMap lex . lines
   
-  parsed file = case parseFileContents file of
+  parsed file = case parseFileContentsWithMode (defaultParseMode { parseFilename = filePath }) file of
     ParseOk parsedModule -> Just (declarations parsedModule)
     ParseFailed _ _ -> Nothing
   declarations (S.Module _ _ _ _ decls) = mapMaybe testFunName decls

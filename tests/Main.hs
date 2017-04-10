@@ -1,8 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
-import Test.Tasty
 import Test.Tasty.TH
 import Test.Tasty.HUnit
-import System.Directory
 import Data.List (sort)
 
 main :: IO ()

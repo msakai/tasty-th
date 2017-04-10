@@ -39,6 +39,7 @@ step "Running tests" << EOF
   cabal install tasty-quickcheck tasty-hunit
   runhaskell -isrc example.hs
   runhaskell -isrc example-explicit.hs
+  runhaskell -isrc example-literate.lhs
 EOF
 
 step "Creating source distribution" << EOF

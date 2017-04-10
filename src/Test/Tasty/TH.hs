@@ -35,6 +35,9 @@ import qualified Language.Haskell.Exts.Syntax as S
 import Language.Haskell.TH
 import Data.List
 import Data.Maybe
+import Data.Data (gmapQ, Data)
+import Data.Typeable (cast)
+import Data.List (nub)
 
 import Test.Tasty
 import Prelude
@@ -94,10 +97,25 @@ extractTestFunctions filePath = do
   parsed file = case parseFileContentsWithMode (defaultParseMode { parseFilename = filePath }) file of
     ParseOk parsedModule -> Just (declarations parsedModule)
     ParseFailed _ _ -> Nothing
-  declarations (S.Module _ _ _ _ decls) = mapMaybe testFunName decls
+  declarations (S.Module _ _ _ _ decls) = concatMap testFunName decls
   declarations _ = []
-  testFunName (S.PatBind _ (S.PVar _ (S.Ident _ n)) _ _) = Just n
-  testFunName _ = Nothing
+  testFunName (S.PatBind _ pat _ _) = patternVariables pat
+  testFunName (S.FunBind _ clauses) = nub (map clauseName clauses)
+  testFunName _ = []
+  clauseName (S.Match _ name _ _ _) = nameString name
+  clauseName (S.InfixMatch _ _ name _ _ _) = nameString name
+
+-- | Convert a 'Name' to a 'String'
+nameString :: S.Name l -> String
+nameString (S.Ident _ n) = n
+nameString (S.Symbol _ n) = n
+
+-- | Find all variables that are bound in the given pattern.
+patternVariables :: Data l => S.Pat l -> [String]
+patternVariables = go
+ where
+  go (S.PVar _ name) = [nameString name]
+  go pat = concat $ gmapQ (foldMap go . cast) pat
 
 -- | Extract the name of the current module.
 locationModule :: ExpQ

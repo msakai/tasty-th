@@ -11,6 +11,10 @@ description: Generate tasty TestTrees automatically with TemplateHaskell. See th
 
 category: Testing
 author: Oscar Finnsson & Emil Nordling & Benno Fünfstück
+extra-source-files:
+  example.hs
+  example-explicit.hs
+  example-literate.lhs
 
 library
   exposed-modules: Test.Tasty.TH

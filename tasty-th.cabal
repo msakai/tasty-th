@@ -1,6 +1,6 @@
 name: tasty-th
-version: 0.1.6
 cabal-version: >= 1.6
+version: 0.1.7
 build-type: Simple
 license: BSD3
 license-file: BSD3.txt

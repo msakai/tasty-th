@@ -37,6 +37,7 @@ import Data.Maybe
 import Data.Data (gmapQ, Data)
 import Data.Typeable (cast)
 import Data.List (nub, isPrefixOf, find)
+import Data.Foldable (foldMap)
 
 import Test.Tasty
 import Prelude

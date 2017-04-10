@@ -24,10 +24,8 @@ test-suite tasty-th-tests
   main-is: Main.hs
   build-depends:
     base >= 4 && < 5,
-    tasty,
     tasty-hunit,
     tasty-th,
-    directory
   ghc-options: -Wall
   default-language:    Haskell2010
   type: exitcode-stdio-1.0

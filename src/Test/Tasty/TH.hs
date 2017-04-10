@@ -33,11 +33,10 @@ import Language.Haskell.Exts (parseFileContentsWithMode)
 import Language.Haskell.Exts.Parser (ParseResult(..), defaultParseMode, parseFilename)
 import qualified Language.Haskell.Exts.Syntax as S
 import Language.Haskell.TH
-import Data.List
 import Data.Maybe
 import Data.Data (gmapQ, Data)
 import Data.Typeable (cast)
-import Data.List (nub)
+import Data.List (nub, isPrefixOf, find)
 
 import Test.Tasty
 import Prelude

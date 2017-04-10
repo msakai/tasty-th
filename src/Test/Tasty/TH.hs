@@ -37,7 +37,7 @@ import Data.Maybe
 import Data.Data (gmapQ, Data)
 import Data.Typeable (cast)
 import Data.List (nub, isPrefixOf, find)
-import Data.Foldable (foldMap)
+import qualified Data.Foldable as F
 
 import Test.Tasty
 import Prelude
@@ -115,7 +115,7 @@ patternVariables :: Data l => S.Pat l -> [String]
 patternVariables = go
  where
   go (S.PVar _ name) = [nameString name]
-  go pat = concat $ gmapQ (foldMap go . cast) pat
+  go pat = concat $ gmapQ (F.foldMap go . cast) pat
 
 -- | Extract the name of the current module.
 locationModule :: ExpQ

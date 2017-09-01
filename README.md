@@ -1,7 +1,7 @@
 # tasty-th
 
 Automatically generate tasty TestTrees from functions of the current module, using TemplateHaskell.
-This is a fork the original [test-framework-th](https://github.com/finnsson/test-generator) package, modified to work with tasty instead of test-framework. Usage is exactly the same as for the orginal package.
+This is a fork the original [test-framework-th](https://github.com/finnsson/test-generator) package, modified to work with tasty instead of test-framework. Usage is exactly the same as for the original package.
 
 ### Usage
 

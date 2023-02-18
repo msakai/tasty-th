@@ -38,6 +38,7 @@ import Data.Data (gmapQ, Data)
 import Data.Typeable (cast)
 import Data.List (nub, isPrefixOf, find)
 import qualified Data.Foldable as F
+import System.IO
 
 import Test.Tasty
 import Prelude
@@ -83,7 +84,7 @@ testGroupGenerator = join $ testGroupGeneratorFor <$> fmap loc_module location <
 -- | Retrieves all function names from the given file that would be discovered by 'testGroupGenerator'.
 extractTestFunctions :: FilePath -> IO [String]
 extractTestFunctions filePath = do
-  file <- readFile filePath
+  file <- readUTF8File filePath
   -- we first try to parse the file using haskell-src-exts
   -- if that fails, we fallback to lexing each line, which is less
   -- accurate but is more reliable (haskell-src-exts sometimes struggles
@@ -150,3 +151,9 @@ fixName = replace '_' ' ' . tail . dropWhile (/= '_')
 
 replace :: Eq a => a -> a -> [a] -> [a]
 replace b v = map (\i -> if b == i then v else i)
+
+readUTF8File :: FilePath -> IO String
+readUTF8File fp = do
+  h <- openFile fp ReadMode
+  hSetEncoding h utf8
+  hGetContents h
